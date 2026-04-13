@@ -19,8 +19,16 @@ const _schema = i.schema({
       imageURL: i.string().optional(),
       type: i.string().optional(),
     }),
-    colors: i.entity({
-      value: i.string().optional(),
+    rooms: i.entity({
+      name: i.string(),
+      createdAt: i.number(),
+    }),
+    messages: i.entity({
+      text: i.string(),
+      createdAt: i.number(),
+      // Denormalised creator id — used by instant.perms.ts to enforce
+      // ownership without resolving the messageCreator link at rule-check time.
+      creatorId: i.string().indexed(),
     }),
   },
   links: {
@@ -48,6 +56,30 @@ const _schema = i.schema({
         on: "$users",
         has: "many",
         label: "linkedGuestUsers",
+      },
+    },
+    roomMessages: {
+      forward: {
+        on: "rooms",
+        has: "many",
+        label: "messages",
+      },
+      reverse: {
+        on: "messages",
+        has: "one",
+        label: "room",
+      },
+    },
+    messageCreator: {
+      forward: {
+        on: "messages",
+        has: "one",
+        label: "creator",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "messages",
       },
     },
   },

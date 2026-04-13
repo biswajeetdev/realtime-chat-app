@@ -4,21 +4,52 @@ import type { InstantRules } from "@instantdb/react-native";
 
 const rules = {
   /**
-   * Welcome to Instant's permission system!
-   * Right now your rules are empty. To start filling them in, check out the docs:
-   * https://www.instantdb.com/docs/permissions
-   *
-   * Here's an example to give you a feel:
-   * posts: {
-   *   allow: {
-   *     view: "true",
-   *     create: "isOwner",
-   *     update: "isOwner",
-   *     delete: "isOwner",
-   *   },
-   *   bind: {"isOwner": "auth.id != null && auth.id == data.ownerId"},
-   * },
+   * rooms: any signed-in user (including guests) can view and create rooms.
+   * No one can update or delete a room after creation.
    */
+  rooms: {
+    allow: {
+      view: "auth.id != null",
+      create: "auth.id != null",
+      update: "false",
+      delete: "false",
+    },
+  },
+
+  /**
+   * messages: any signed-in user can view messages.
+   * Only authenticated users can create a message, and the creatorId they
+   * supply must match their own auth id (prevents impersonation).
+   * Only the original creator can update or delete their own message.
+   */
+  messages: {
+    allow: {
+      view: "auth.id != null",
+      create: "auth.id != null && auth.id == newData.creatorId",
+      update: "isCreator",
+      delete: "isCreator",
+    },
+    bind: {
+      isCreator: "auth.id != null && auth.id == data.creatorId",
+    },
+  },
+
+  /**
+   * $users: any signed-in user can view basic user records (needed for
+   * displaying sender names). Users can only update their own record.
+   * No one can create or delete $users directly (managed by InstantDB auth).
+   */
+  $users: {
+    allow: {
+      view: "auth.id != null",
+      create: "false",
+      update: "isOwn",
+      delete: "false",
+    },
+    bind: {
+      isOwn: "auth.id != null && auth.id == data.id",
+    },
+  },
 } satisfies InstantRules;
 
 export default rules;
